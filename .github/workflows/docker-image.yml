@@ -41,8 +41,8 @@ jobs:
         build-args: |
           APP_VERSION=${{ env.VERSION }}
         tags: |
-          ${{ secrets.DOCKER_USERNAME }}/plex-spot:latest
-          ${{ secrets.DOCKER_USERNAME }}/plex-spot:${{ env.VERSION }}
+          ${{ secrets.DOCKER_USERNAME }}/jellyfin-spot:latest
+          ${{ secrets.DOCKER_USERNAME }}/jellyfin-spot:${{ env.VERSION }}
       continue-on-error: false  # Fail if build or push fails
 
     - name: Log out from Docker Hub
@@ -63,8 +63,8 @@ jobs:
         build-args: |
           APP_VERSION=${{ env.VERSION }}
         tags: |
-          ghcr.io/${{ github.repository_owner }}/plex-spot:latest
-          ghcr.io/${{ github.repository_owner }}/plex-spot:${{ env.VERSION }}
+          ghcr.io/${{ github.repository_owner }}/jellyfin-spot:latest
+          ghcr.io/${{ github.repository_owner }}/jellyfin-spot:${{ env.VERSION }}
 
     - name: Log out from GHCR
       run: docker logout

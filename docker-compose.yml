@@ -1,13 +1,13 @@
 version: '3'
 services:
-  plex-spot:
-    container_name: plex-spot
-    image: ziadhorat/plex-spot
+  jellyfin-spot:
+    container_name: jellyfin-spot
+    image: jontstaz/jellyfin-spot
     ports:
       - "8501:8501"
     environment:
-      - PLEX_API_TOKEN=${PLEX_API_TOKEN}
-      - PLEX_SERVER_URL=${PLEX_SERVER_URL}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
+      - JELLYFIN_SERVER_URL=${JELLYFIN_SERVER_URL}
       - DASHBOARD_TITLE=${DASHBOARD_TITLE}
       - DASHBOARD_ICON=${DASHBOARD_ICON}
       - DEBUG=${DEBUG}

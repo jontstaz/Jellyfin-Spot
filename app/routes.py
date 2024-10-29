@@ -1,15 +1,25 @@
 from flask import render_template, jsonify, abort, send_from_directory
 from app import app, cache
-from app.plex_client import PlexClient
+from app.jellyfin_client import JellyfinClient
 import os
+from dotenv import load_dotenv
 import traceback
 
-plex_server_url = os.getenv("PLEX_SERVER_URL", "http://localhost:32400")
-plex_api_token = os.getenv("PLEX_API_TOKEN", "none")
-dashboard_title = os.getenv("DASHBOARD_TITLE", "PlexSpot")
-dashboard_icon = os.getenv("DASHBOARD_ICON", "https://cdn-icons-png.freepik.com/256/7664/7664156.png")
+# Load environment variables from .env file
+load_dotenv()
 
-plex_client = PlexClient(plex_server_url, plex_api_token)
+jellyfin_server_url = os.getenv("JELLYFIN_SERVER_URL")
+jellyfin_api_key = os.getenv("JELLYFIN_API_KEY")
+dashboard_title = os.getenv("DASHBOARD_TITLE", "JellyfinSpot")
+dashboard_icon = os.getenv("DASHBOARD_ICON", "https://cdn-icons-png.freepik.com/256/7664/7664156.png")
+print(os.getenv("DASHBOARD_ICON"))
+print(os.getenv("DASHBOARD_TITLE"))
+
+# Update Flask app config with the loaded values
+app.config['DASHBOARD_TITLE'] = dashboard_title
+app.config['DASHBOARD_ICON'] = dashboard_icon
+
+jellyfin_client = JellyfinClient(jellyfin_server_url, jellyfin_api_key)
 
 @app.route('/manifest.json')
 def manifest():
@@ -33,7 +43,7 @@ def index():
 @cache.cached(timeout=60)
 def user_stats():
     try:
-        stats = plex_client.get_user_stats()
+        stats = jellyfin_client.get_user_stats()
         return jsonify(stats)
     except Exception as e:
         app.logger.error(f"Error in user_stats route: {str(e)}")
@@ -42,71 +52,33 @@ def user_stats():
 @app.route('/api/libraries')
 @cache.cached(timeout=3600)
 def get_libraries():
-    library_stats = plex_client.get_library_stats()
+    library_stats = jellyfin_client.get_library_stats()
     libraries = library_stats.get('MediaContainer', {}).get('Directory', [])
     if isinstance(libraries, dict):
         libraries = [libraries]
-    return [{'key': lib['@key'], 'title': lib['@title']} for lib in libraries]
+    
+    # Filter to only include Movies and Shows libraries, explicitly exclude YouTube
+    allowed_types = ['movies', 'tvshows']
+    excluded_ids = ['34f331a89ce405e2b877d68d5ee4d4a2']  # YouTube library ID
+    filtered_libraries = [
+        {'key': lib['Id'], 'title': lib['Name']} 
+        for lib in libraries 
+        if lib.get('CollectionType', '').lower() in allowed_types 
+        and lib['Id'] not in excluded_ids
+    ]
+    
+    return filtered_libraries
 
 @app.route('/api/library_contents/<library_key>')
 @cache.cached(timeout=3600)
 def library_contents(library_key):
     try:
-        contents = plex_client.get_library_contents(library_key)
+        contents = jellyfin_client.get_library_contents(library_key)
         if not contents:
             app.logger.error(f"No contents returned for library key: {library_key}")
             return jsonify({'error': 'No library contents found'}), 404
 
-        media_items = contents.get('MediaContainer', {}).get('Video', []) or contents.get('MediaContainer', {}).get('Directory', [])
-        if not media_items:
-            app.logger.error(f"No media items found in library contents for key: {library_key}")
-            return jsonify({'error': 'No media items found in library'}), 404
-
-        if isinstance(media_items, dict):
-            media_items = [media_items]
-        
-        formatted_items = []
-        for item in media_items:
-            try:
-                genres = item.get('Genre', [])
-                if isinstance(genres, list):
-                    genres = ", ".join(genre.get('@tag', 'N/A') for genre in genres)
-                elif isinstance(genres, dict):
-                    genres = genres.get('@tag', 'N/A')
-                else:
-                    genres = 'N/A'
-                
-                added_date = item.get('@addedAt', 'N/A')
-                if added_date != 'N/A':
-                    from datetime import datetime
-                    added_date = datetime.fromtimestamp(int(added_date)).strftime('%Y-%m-%d')
-                
-                media = item.get('Media', [])
-                media = media[0] if isinstance(media, list) and media else {}
-                
-                formatted_items.append({
-                    "title": item.get('@title', 'N/A'),
-                    "year": item.get('@year', 'N/A'),
-                    "genres": genres,
-                    "added_date": added_date,
-                    "studio": item.get('@studio', 'N/A'),
-                    "summary": item.get('@summary', 'No summary available.'),
-                    "contentRating": item.get('@contentRating', 'N/A'),
-                    "rating": item.get('@rating', 'N/A'),
-                    "audienceRating": item.get('@audienceRating', 'N/A'),
-                    "duration": str(int(media.get('duration', 0)) // 60000) + " min",
-                    "resolution": f"{media.get('width', 'N/A')}x{media.get('height', 'N/A')}"
-                })
-            except Exception as item_error:
-                app.logger.error(f"Error processing item: {str(item_error)}")
-                app.logger.error(f"Problematic item: {item}")
-                app.logger.error(traceback.format_exc())
-        
-        if not formatted_items:
-            app.logger.error(f"No items could be formatted for library key: {library_key}")
-            return jsonify({'error': 'No items could be formatted'}), 500
-
-        return jsonify(formatted_items)
+        return jsonify(contents)
     except Exception as e:
         app.logger.error(f"Error in library_contents route: {str(e)}")
         app.logger.error(traceback.format_exc())
@@ -115,15 +87,23 @@ def library_contents(library_key):
 @app.route('/api/genres/<library_key>')
 @cache.cached(timeout=3600)
 def get_genres(library_key):
-    contents = plex_client.get_library_contents(library_key)
-    media_items = contents.get('MediaContainer', {}).get('Video', []) or contents.get('MediaContainer', {}).get('Directory', [])
+    contents = jellyfin_client.get_library_contents(library_key)
+    if not contents:
+        return jsonify([])
     
     all_genres = set()
-    for item in media_items:
-        genres = item.get('Genre', [])
-        if isinstance(genres, list):
-            all_genres.update(genre.get('@tag', 'N/A') for genre in genres)
-        elif isinstance(genres, dict):
-            all_genres.add(genres.get('@tag', 'N/A'))
+    for item in contents:
+        genres = item.get('genres', '').split(', ')
+        all_genres.update(genre for genre in genres if genre and genre != 'N/A')
     
-    return jsonify(list(all_genres))
+    return jsonify(sorted(list(all_genres)))
+
+@app.route('/api/total_counts')
+@cache.cached(timeout=3600)
+def get_total_counts():
+    try:
+        counts = jellyfin_client.get_total_counts()
+        return jsonify(counts)
+    except Exception as e:
+        app.logger.error(f"Error in total_counts route: {str(e)}")
+        return jsonify({'error': 'Unable to fetch total counts'}), 500

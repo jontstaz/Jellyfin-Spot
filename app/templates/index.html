@@ -130,7 +130,7 @@
     <nav class="fixed top-0 left-0 right-0 z-10 transition-colors duration-200">
         <div class="full-width-container mx-auto py-3 flex justify-between items-center">
             <a href="#" class="flex items-center space-x-2 text-xl font-semibold">
-                <img src="{{ icon }}" alt="PlexSpot Icon" class="w-8 h-8">
+                <img src="{{ icon }}" alt="JellySpot Icon" class="w-8 h-8">
                 <span>{{ title }}</span>
             </a>
             <button id="darkModeToggle" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
@@ -143,12 +143,12 @@
         <div class="full-width-container mx-auto px-4">
             <div class="grid grid-cols-2 gap-4 mb-4">
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 transition-transform duration-300 hover:-translate-y-1">
-                    <h5 class="text-lg font-semibold text-primary mb-2"><i class="fas fa-play-circle mr-2"></i>Streams</h5>
-                    <p class="text-3xl font-bold" id="activeStreams">Loading...</p>
+                    <h5 class="text-lg font-semibold text-primary mb-2"><i class="fas fa-film mr-2"></i>Total Movies</h5>
+                    <p class="text-3xl font-bold" id="totalMovies">Loading...</p>
                 </div>
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 transition-transform duration-300 hover:-translate-y-1">
-                    <h5 class="text-lg font-semibold text-primary mb-2"><i class="fas fa-film mr-2"></i>Total</h5>
-                    <p class="text-3xl font-bold" id="libraryTotal">Loading...</p>
+                    <h5 class="text-lg font-semibold text-primary mb-2"><i class="fas fa-tv mr-2"></i>Total TV Shows</h5>
+                    <p class="text-3xl font-bold" id="totalShows">Loading...</p>
                 </div>
             </div>
         </div>
@@ -189,8 +189,8 @@
 
     <footer class="fixed bottom-0 left-0 right-0 transition-colors duration-200">
         <div class="full-width-container mx-auto py-3 flex justify-between items-center">
-            <a href="https://github.com/ziadhorat/plex-spot" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
-                <i class="fab fa-github mr-2"></i>Plex-Spot
+            <a href="https://github.com/jontstaz/jellyfin-spot" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                <i class="fab fa-github mr-2"></i>Jellyfin-Spot
             </a>
             <span class="text-gray-600 dark:text-gray-400">{{ app_version }}</span>
         </div>
@@ -253,12 +253,13 @@
             }
 
             function escapeHtml(unsafe) {
-                return unsafe
-                     .replace(/&/g, "&amp;")
-                     .replace(/</g, "&lt;")
-                     .replace(/>/g, "&gt;")
-                     .replace(/"/g, "&quot;")
-                     .replace(/'/g, "&#039;");
+                if (unsafe == null) return 'N/A';
+                return String(unsafe)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
             }
 
             function loadLibraryContents(libraryKey) {
@@ -266,30 +267,45 @@
                     url: `/api/library_contents/${libraryKey}`,
                     method: 'GET',
                     success: function(data) {
+                        console.log("Received data:", data);
                         if (table) {
                             table.destroy();
                         }
                         $('#libraryContents tbody').empty();
+                        
+                        if (!Array.isArray(data)) {
+                            console.error("Data is not an array:", data);
+                            return;
+                        }
+                        
                         data.forEach(function(item) {
+                            console.log("Processing item:", item);
                             $('#libraryContents tbody').append(`
                                 <tr class="border-b border-gray-200 dark:border-gray-700">
                                     <td class="p-3" data-sort="${escapeHtml(item.title)}">
-                                        <span class="info-button mr-1" data-tippy-content="
-                                            <div class='tippy-content text-xs'>
-                                                <div class='tippy-title font-bold'>${escapeHtml(item.title)} (${escapeHtml(item.year)})</div>
-                                                <div class='tippy-tagline italic'>${escapeHtml(item.tagline || '')}</div>
-                                                <div class='tippy-studio'>${escapeHtml(item.studio || 'N/A')}</div>
-                                                <div><strong>Genres:</strong> ${escapeHtml(item.genres)}</div>
-                                                <div><strong>Rated:</strong> ${escapeHtml(item.contentRating)}</div>
-                                                <div><strong>Added:</strong> ${escapeHtml(item.added_date)}</div>
-                                                <div><strong>Rating:</strong> ${escapeHtml(item.rating)}</div>
-                                                <div><strong>Audience Rating:</strong> ${escapeHtml(item.audienceRating)}</div>
-                                                <div class='tippy-summary mt-1'>${escapeHtml(item.summary || 'No summary available.')}</div>
+                                        <div class="flex items-center">
+                                            <img src="${item.imageUrl}" 
+                                                 alt="${escapeHtml(item.title)}" 
+                                                 class="w-12 h-16 object-cover rounded mr-3"
+                                                 onerror="this.src='static/images/no-poster.png'">
+                                            <div>
+                                                <span class="info-button mr-1" data-tippy-content="
+                                                    <div class='tippy-content text-xs'>
+                                                        <div class='tippy-title font-bold'>${escapeHtml(item.title)} (${escapeHtml(item.year)})</div>
+                                                        <div class='tippy-tagline italic'>${escapeHtml(item.tagline || '')}</div>
+                                                        <div class='tippy-studio'>${escapeHtml(item.studio || 'N/A')}</div>
+                                                        <div><strong>Genres:</strong> ${escapeHtml(item.genres)}</div>
+                                                        <div><strong>Rated:</strong> ${escapeHtml(item.contentRating)}</div>
+                                                        <div><strong>Added:</strong> ${escapeHtml(item.added_date)}</div>
+                                                        <div><strong>Rating:</strong> ${escapeHtml(item.rating)}</div>
+                                                        <div class='tippy-summary mt-1'>${escapeHtml(item.summary || 'No summary available.')}</div>
+                                                    </div>
+                                                ">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </span>
+                                                ${escapeHtml(item.title)}
                                             </div>
-                                        ">
-                                            <i class="fas fa-info-circle"></i>
-                                        </span>
-                                        ${escapeHtml(item.title)}
+                                        </div>
                                     </td>
                                     <td class="p-3">${escapeHtml(item.year)}</td>
                                     <td class="p-3">${escapeHtml(item.genres)}</td>
@@ -314,7 +330,7 @@
                                     allowHTML: true,
                                     interactive: true,
                                     maxWidth: 300,
-                                    animation: 'scale',
+                                    animation: 'scale'
                                 });
                             },
                             "paging": true,
@@ -324,18 +340,6 @@
                             "responsive": true
                         });
                         
-                        $('#libraryTotal').text(data.length);
-                        
-                        $('#libraryContents_length').on('change', function() {
-                            table.page.len($(this).val()).draw();
-                        });
-                        $('input[type="search"]').on('keyup', function() {
-                            table.search(this.value).draw();
-                        });
-                        $('#genreFilter').on('change', function() {
-                            table.column(2).search(this.value).draw();
-                        });
-
                         loadGenres(libraryKey);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
@@ -355,6 +359,16 @@
             updateUserStats();
             loadLibraries();
             setInterval(updateUserStats, 60000);
+
+            function updateTotalCounts() {
+                $.get('/api/total_counts', function(data) {
+                    $('#totalMovies').text(data.total_movies);
+                    $('#totalShows').text(data.total_shows);
+                });
+            }
+
+            updateTotalCounts();
+            setInterval(updateTotalCounts, 3600000); // Update every hour
         });
     </script>
     <script>
