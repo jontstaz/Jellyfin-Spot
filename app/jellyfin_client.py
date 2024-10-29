@@ -87,7 +87,7 @@ class JellyfinClient:
             base_params = (
                 f"ParentId={library_key}&"
                 "Fields=Path,Overview,Genres,Studios,ProductionYear,OfficialRating,"
-                "DateCreated,RunTimeTicks,MediaSources,Width,Height"
+                "DateCreated,RunTimeTicks,MediaSources,Width,Height,UserData"
             )
 
             # Add type-specific parameters
@@ -125,7 +125,8 @@ class JellyfinClient:
                         'duration': duration,
                         'resolution': f"{item.get('Width', 'N/A')}x{item.get('Height', 'N/A')}",
                         'tagline': item.get('Tagline', ''),
-                        'imageUrl': f"{self.base_url}/Items/{item.get('Id')}/Images/Primary"
+                        'watched': item.get('UserData', {}).get('Played', False),
+                        'imageUrl': f"{self.base_url}/Items/{item.get('Id')}/Images/Primary?maxHeight=150&quality=60"
                     })
                 except Exception as item_error:
                     logger.error(f"Error processing item: {str(item_error)}")
@@ -152,3 +153,4 @@ class JellyfinClient:
         except Exception as e:
             logger.error(f"Error getting total counts: {str(e)}")
             return {'total_movies': 0, 'total_shows': 0}
+            

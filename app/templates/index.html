@@ -130,7 +130,7 @@
     <nav class="fixed top-0 left-0 right-0 z-10 transition-colors duration-200">
         <div class="full-width-container mx-auto py-3 flex justify-between items-center">
             <a href="#" class="flex items-center space-x-2 text-xl font-semibold">
-                <img src="{{ icon }}" alt="JellySpot Icon" class="w-8 h-8">
+                <img src="{{ icon }}" alt="PlexSpot Icon" class="w-8 h-8">
                 <span>{{ title }}</span>
             </a>
             <button id="darkModeToggle" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
@@ -177,6 +177,7 @@
                                 <th class="p-3">Title</th>
                                 <th class="p-3">Year</th>
                                 <th class="p-3">Genres</th>
+                                <th class="p-3">Watched</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -189,8 +190,8 @@
 
     <footer class="fixed bottom-0 left-0 right-0 transition-colors duration-200">
         <div class="full-width-container mx-auto py-3 flex justify-between items-center">
-            <a href="https://github.com/jontstaz/jellyfin-spot" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
-                <i class="fab fa-github mr-2"></i>Jellyfin-Spot
+            <a href="https://github.com/ziadhorat/plex-spot" target="_blank" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                <i class="fab fa-github mr-2"></i>Plex-Spot
             </a>
             <span class="text-gray-600 dark:text-gray-400">{{ app_version }}</span>
         </div>
@@ -309,6 +310,9 @@
                                     </td>
                                     <td class="p-3">${escapeHtml(item.year)}</td>
                                     <td class="p-3">${escapeHtml(item.genres)}</td>
+                                    <td class="p-3">
+                                        <i class="fas ${item.watched ? 'fa-check text-green-500' : 'fa-times text-red-500'}"></i>
+                                    </td>
                                 </tr>
                             `);
                         });
