@@ -344,6 +344,32 @@
                             "responsive": true
                         });
                         
+                        // Add genre filter functionality
+                        $('#genreFilter').on('change', function() {
+                            let selectedGenre = $(this).val();
+                            
+                            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                                if (!selectedGenre) return true;
+                                let genres = data[2]; // Index 2 is the genres column
+                                return genres.includes(selectedGenre);
+                            });
+                            
+                            table.draw();
+                            
+                            // Remove the custom search function after drawing
+                            $.fn.dataTable.ext.search.pop();
+                        });
+
+                        // Connect the search input to DataTables
+                        $('input[type="search"]').on('keyup', function() {
+                            table.search(this.value).draw();
+                        });
+
+                        // Connect the length menu
+                        $('#libraryContents_length').on('change', function() {
+                            table.page.len($(this).val()).draw();
+                        });
+
                         loadGenres(libraryKey);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
