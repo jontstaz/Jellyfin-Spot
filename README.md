@@ -1,72 +1,89 @@
-# <img src="https://cdn-icons-png.freepik.com/256/7664/7664156.png?uid=R161963193&ga=GA1.1.651749782.1725523197&semt=ais_hybrid" alt="iCON" width="30" height="30"> PlexSpot
+# <img src="https://jellyfin.org/images/logo.svg" alt="Jellyfin Logo" height="30"> JellyfinSpot
 
-PlexSpot: Your Plex server's elegant public face. Showcase your media library with style and simplicity.
+JellyfinSpot: An elegant public interface for your Jellyfin media server. Showcase your media library with enhanced browsing and sorting capabilities.
 
-![size](https://img.shields.io/docker/image-size/ziadhorat/plex-spot/latest?color=0eb305)
-![pulls](https://img.shields.io/docker/pulls/ziadhorat/plex-spot?color=2b75d6) 
-[![GitHub Release][release-img]][release]
-[![License][license-img]][license]
-[![CodeQL](https://github.com/ziadhorat/Plex-Spot/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/ziadhorat/Plex-Spot/actions/workflows/github-code-scanning/codeql)
-[![Trivy](https://github.com/ziadhorat/Plex-Spot/actions/workflows/trivy.yml/badge.svg)](https://github.com/ziadhorat/Plex-Spot/actions/workflows/trivy.yml)
-[![Docker Image CI](https://github.com/ziadhorat/Plex-Spot/actions/workflows/docker-image.yml/badge.svg)](https://github.com/ziadhorat/Plex-Spot/actions/workflows/docker-image.yml)
+![Docker Image CI](https://github.com/jontstaz/Jellyfin-Spot/actions/workflows/docker-image.yml/badge.svg)
+<!-- Update other badges with your repository information -->
 
-[Docker Hub](https://hub.docker.com/r/ziadhorat/plex-spot) | [Live Demo](https://plex-spot.labhome.co.za)
+[Docker Hub](https://hub.docker.com/r/jontstaz/jellyfin-spot)
 
-![DemoGif](https://github.com/user-attachments/assets/70c510c5-c95b-4d86-8597-0d919b554096)
+![Screenshot](./screenshot.png)
+
+## ✨ Features
+
+- **Rich Media Display**: Thumbnails for all movies and TV shows
+- **Advanced Sorting Options**:
+  - Alphabetical (A-Z, Z-A)
+  - Release Date (Newest to Oldest, Oldest to Newest)
+  - Recently Added
+- **Watch Status Tracking**: 
+  - ✓ Checkmark for watched content
+  - ✗ Cross for unwatched content
+- **Clean, Public-Facing Interface**: Perfect for sharing your library
+- **Real-time Statistics**: Monitor library size and user activity
+- **Responsive Design**: Works great on desktop and mobile
 
 ## 🚀 Quick Start
 
 ```bash
-docker run -d --name plex-spot \
+docker run -d --name jellyfin-spot \
   -p 8501:8501 \
-  -e PLEX_API_TOKEN=your_token_here \
-  -e PLEX_SERVER_URL=http://your_server_ip:32400 \
-  ziadhorat/plex-spot
+  -e JELLYFIN_API_KEY=your_api_key_here \
+  -e JELLYFIN_SERVER_URL=http://your_server_ip:8096 \
+  jontstaz/jellyfin-spot
 ```
 
-Access at `http://localhost:8501`
-
-## 🌟 Why PlexSpot?
-
-- Sleek, public-facing interface for your Plex library
-- Real-time user activity and library statistics
-- Effortless setup with Docker
+Access your dashboard at `http://localhost:8501`
 
 ## 🛠 Configuration
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `PLEX_API_TOKEN` | Your Plex API token | Yes |
-| `PLEX_SERVER_URL` | Your Plex server URL (Use local IPv4 of plex instead of localhost) | Yes |
+| `JELLYFIN_API_KEY` | Your Jellyfin API key | Yes |
+| `JELLYFIN_SERVER_URL` | Your Jellyfin server URL | Yes |
 | `DASHBOARD_TITLE` | Custom dashboard title | No |
 | `DASHBOARD_ICON` | Custom dashboard icon URL | No |
 | `DEBUG` | Enable debug mode (True/False) | No |
 
-Need help getting your Plex token? [Follow this guide](https://digiex.net/threads/plex-guide-step-by-step-getting-plex-token.15402/)
+### Getting Your Jellyfin API Key
+1. Log in to your Jellyfin server as an administrator
+2. Go to Dashboard → API Keys
+3. Create a new API key with appropriate permissions
 
 ## 📊 Docker Compose
 
 ```yaml
 version: '3'
 services:
-  plex-spot:
-    image: ziadhorat/plex-spot
+  jellyfin-spot:
+    image: jontstaz/jellyfin-spot
     ports:
       - "8501:8501"
     environment:
-      - PLEX_API_TOKEN=${PLEX_API_TOKEN}
-      - PLEX_SERVER_URL=${PLEX_SERVER_URL}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
+      - JELLYFIN_SERVER_URL=${JELLYFIN_SERVER_URL}
 ```
 
-## 🤝 Contribute
+## 🔄 Differences from PlexSpot
 
-Issues, features, and pull requests welcome! Let's make PlexSpot even better together.
+This fork of PlexSpot has been completely adapted for Jellyfin and includes several enhancements:
+- Full Jellyfin API integration
+- Added thumbnail support for all media items
+- Implemented comprehensive sorting options
+- Added watch status indicators (✓/✗)
+- Improved UI/UX for better media browsing
+- Optimized performance for larger libraries
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest new features
+- Submit pull requests
 
 ## 📜 License
 
 MIT License. See [LICENSE](LICENSE) for details.
 
-[release]: https://github.com/ziadhorat/Plex-Spot/releases/latest
-[release-img]: https://img.shields.io/github/v/release/ziadhorat/Plex-Spot?logo=github
-[license]: https://github.com/ziadhorat/Plex-Spot/blob/master/LICENSE
-[license-img]: https://img.shields.io/github/license/ziadhorat/Plex-Spot
+---
+*This project is a fork of [PlexSpot](https://github.com/ziadhorat/Plex-Spot), modified to work with Jellyfin Media Server and enhanced with additional features.*
