@@ -158,7 +158,7 @@
                 <select id="librarySelect" class="w-full mb-4 p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     <option value="">Select a Library</option>
                 </select>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <select id="libraryContents_length" class="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <option value="25">Show 25 entries</option>
                         <option value="50">Show 50 entries</option>
@@ -167,6 +167,12 @@
                     </select>
                     <select id="genreFilter" class="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                         <option value="">All Genres</option>
+                    </select>
+                    <select id="sortOrder" class="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        <option value="title-asc">Title (A-Z)</option>
+                        <option value="title-desc">Title (Z-A)</option>
+                        <option value="year-desc">Newest First</option>
+                        <option value="year-asc">Oldest First</option>
                     </select>
                     <input type="search" class="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Search" aria-controls="libraryContents">
                 </div>
@@ -203,7 +209,8 @@
         $(document).ready(function() {
             let table;
             let defaultLibrary = "{{ default_library|default('', true) }}";
-            let isDarkMode = localStorage.getItem('darkMode') === 'true';
+            // Set dark mode as default if no preference is stored
+            let isDarkMode = localStorage.getItem('darkMode') !== 'false';
 
             function toggleDarkMode() {
                 isDarkMode = !isDarkMode;
@@ -214,6 +221,7 @@
 
             $('#darkModeToggle').click(toggleDarkMode);
 
+            // Apply dark mode by default
             if (isDarkMode) {
                 document.documentElement.classList.add('dark');
                 $('#darkModeToggle').html('<i class="fas fa-sun mr-2"></i>Mode');
@@ -282,13 +290,10 @@
                         data.forEach(function(item) {
                             console.log("Processing item:", item);
                             $('#libraryContents tbody').append(`
-                                <tr class="border-b border-gray-200 dark:border-gray-700">
-                                    <td class="p-3" data-sort="${escapeHtml(item.title)}">
+                                <tr class="border-b border-gray-200 dark:border-gray-700" data-added-date="${item.added_date}">
+                                    <td class="p-3" data-added-date="${item.added_date}">
                                         <div class="flex items-center">
-                                            <img src="${item.imageUrl}" 
-                                                 alt="${escapeHtml(item.title)}" 
-                                                 class="w-12 h-16 object-cover rounded mr-3"
-                                                 onerror="this.src='static/images/no-poster.png'">
+                                            <img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" class="w-12 h-16 object-cover rounded mr-3">
                                             <div>
                                                 <span class="info-button mr-1" data-tippy-content="
                                                     <div class='tippy-content text-xs'>
@@ -324,6 +329,19 @@
                             "language": {
                                 "lengthMenu": "_MENU_"
                             },
+                            "order": [[0, 'asc']],
+                            "columnDefs": [
+                                {
+                                    "targets": 0,
+                                    "type": "string",
+                                    "render": function(data, type, row) {
+                                        if (type === 'sort') {
+                                            return $(data).find('div').text().trim();
+                                        }
+                                        return data;
+                                    }
+                                }
+                            ],
                             "drawCallback": function() {
                                 $('.paginate_button').addClass('px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600');
                                 $('.paginate_button.current').addClass('bg-primary text-white');
@@ -358,6 +376,19 @@
                             
                             // Remove the custom search function after drawing
                             $.fn.dataTable.ext.search.pop();
+                        });
+
+                        // Add sort order functionality
+                        $('#sortOrder').on('change', function() {
+                            let [column, direction] = $(this).val().split('-');
+                            
+                            if (column === 'year') {
+                                const columnIndex = 1;  // Year is in the second column
+                                table.order([columnIndex, direction]).draw();
+                            } else {
+                                const columnIndex = column === 'title' ? 0 : 1;
+                                table.order([columnIndex, direction]).draw();
+                            }
                         });
 
                         // Connect the search input to DataTables

@@ -79,15 +79,16 @@ class JellyfinClient:
 
     def get_library_contents(self, library_key):
         try:
-            # First, get the library type from Items endpoint
             library_info = self._make_request(f"/Items?Ids={library_key}")
             collection_type = library_info.get('Items', [{}])[0].get('CollectionType', '').lower()
 
-            # Base query parameters
+            # Base query parameters with SortBy options
             base_params = (
                 f"ParentId={library_key}&"
                 "Fields=Path,Overview,Genres,Studios,ProductionYear,OfficialRating,"
-                "DateCreated,RunTimeTicks,MediaSources,Width,Height,UserData"
+                "DateCreated,RunTimeTicks,MediaSources,Width,Height,UserData&"
+                "SortBy=SortName&"
+                "SortOrder=Ascending"
             )
 
             # Add type-specific parameters
@@ -109,20 +110,20 @@ class JellyfinClient:
                     studio_name = studios[0].get('Name') if studios else 'N/A'
                     genres = ", ".join(item.get('Genres', [])) or 'N/A'
                     
-                    # Calculate duration based on type
-                    duration_ticks = item.get('RunTimeTicks', 0)
-                    duration = f"{int(duration_ticks / (10000000 * 60)) if duration_ticks else 0} min"
+                    # Ensure proper date format for sorting
+                    date_created = item.get('DateCreated', '')
+                    formatted_date = date_created[:19] if date_created else 'N/A'
                     
                     formatted_items.append({
                         'title': item.get('Name', 'N/A'),
                         'year': item.get('ProductionYear', 'N/A'),
                         'genres': genres,
-                        'added_date': item.get('DateCreated', 'N/A')[:10] if item.get('DateCreated') else 'N/A',
+                        'added_date': formatted_date,
                         'studio': studio_name,
                         'summary': item.get('Overview', 'No summary available.'),
                         'contentRating': item.get('OfficialRating', 'N/A'),
                         'rating': item.get('CommunityRating', 'N/A'),
-                        'duration': duration,
+                        'duration': f"{int(item.get('RunTimeTicks', 0) / (10000000 * 60))} min",
                         'resolution': f"{item.get('Width', 'N/A')}x{item.get('Height', 'N/A')}",
                         'tagline': item.get('Tagline', ''),
                         'watched': item.get('UserData', {}).get('Played', False),
